@@ -15,6 +15,7 @@ final class MainListViewController: UIViewController {
     private let tableView = UITableView()
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
     private let errorLabel = UILabel()
+    private let refreshControl = UIRefreshControl()
     
     init(viewModel: MainListViewModel) {
         self.viewModel = viewModel
@@ -39,6 +40,8 @@ final class MainListViewController: UIViewController {
         // TableView
         tableView.register(CryptoCell.self, forCellReuseIdentifier: CryptoCell.identifier)
         tableView.dataSource = self
+        tableView.refreshControl = refreshControl
+        refreshControl.addTarget(self, action: #selector(handleRefresh), for: .valueChanged)
         view.addSubview(tableView)
         tableView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
@@ -67,6 +70,11 @@ final class MainListViewController: UIViewController {
         view.bringSubviewToFront(errorLabel)
     }
     
+    @objc private func handleRefresh() {
+        print("Refresh triggered")
+        viewModel.fetchCryptos()
+    }
+    
     private func bindViewModel() {
         activityIndicator.isHidden = false
         activityIndicator.startAnimating()
@@ -78,6 +86,7 @@ final class MainListViewController: UIViewController {
             .sink { [weak self] cryptos in
                 self?.activityIndicator.stopAnimating()
                 self?.activityIndicator.isHidden = true
+                self?.refreshControl.endRefreshing()
                 self?.errorLabel.isHidden = true
                 self?.tableView.reloadData()
             }
@@ -89,6 +98,7 @@ final class MainListViewController: UIViewController {
                 if let error = error {
                     self?.activityIndicator.stopAnimating()
                     self?.activityIndicator.isHidden = true
+                    self?.refreshControl.endRefreshing()
                     self?.errorLabel.text = "Ошибка: \(error.localizedDescription)"
                     self?.errorLabel.isHidden = false
                 } else {
