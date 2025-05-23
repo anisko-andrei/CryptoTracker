@@ -9,6 +9,14 @@ import Foundation
 import Combine
 
 final class MainListViewModel {
+    enum SortType: String, CaseIterable {
+        case none = "Disable sorting"
+        case nameAsc = "Name ↑"
+        case nameDesc = "Name ↓"
+        case priceAsc = "Price ↑"
+        case priceDesc = "Price ↓"
+    }
+    
     private let cryptoService: CryptoServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
@@ -19,9 +27,11 @@ final class MainListViewModel {
     
     private var currentPage = 1
     private let perPage = 50
-
+    
     @Published var searchText: String = ""
     private var allCryptos: [CryptoCurrency] = []
+    
+    @Published var sortType: SortType = .none
     
     init(cryptoService: CryptoServiceProtocol) {
         self.cryptoService = cryptoService
@@ -33,20 +43,37 @@ final class MainListViewModel {
             .removeDuplicates()
             .debounce(for: .milliseconds(200), scheduler: DispatchQueue.main)
             .sink { [weak self] text in
-                self?.applySearch(text: text)
+                self?.applySearchAndSort(text: text)
             }
             .store(in: &cancellables)
     }
     
-    private func applySearch(text: String) {
-        guard !text.isEmpty else {
-            cryptos = allCryptos
-            return
+    func applySearchAndSort(text: String) {
+        var filtered: [CryptoCurrency]
+        if text.isEmpty {
+            filtered = allCryptos
+        } else {
+            let lowercased = text.lowercased()
+            filtered = allCryptos.filter {
+                $0.name?.lowercased().contains(lowercased) == true ||
+                $0.symbol?.lowercased().contains(lowercased) == true
+            }
         }
-        let lowercased = text.lowercased()
-        cryptos = allCryptos.filter {
-            $0.name?.lowercased().contains(lowercased) == true ||
-            $0.symbol?.lowercased().contains(lowercased) == true
+        cryptos = sort(cryptos: filtered, by: sortType)
+    }
+    
+    private func sort(cryptos: [CryptoCurrency], by type: SortType) -> [CryptoCurrency] {
+        switch type {
+        case .none:
+            return cryptos
+        case .nameAsc:
+            return cryptos.sorted { ($0.name ?? "") < ($1.name ?? "") }
+        case .nameDesc:
+            return cryptos.sorted { ($0.name ?? "") > ($1.name ?? "") }
+        case .priceAsc:
+            return cryptos.sorted { ($0.currentPrice ?? 0) < ($1.currentPrice ?? 0) }
+        case .priceDesc:
+            return cryptos.sorted { ($0.currentPrice ?? 0) > ($1.currentPrice ?? 0) }
         }
     }
     
@@ -67,7 +94,8 @@ final class MainListViewModel {
                     self?.error = err
                 }
             }, receiveValue: { [weak self] coinsWithPrice in
-                self?.cryptos = coinsWithPrice
+                self?.allCryptos = coinsWithPrice
+                self?.applySearchAndSort(text: self?.searchText ?? "")
             })
             .store(in: &cancellables)
     }
@@ -100,7 +128,7 @@ final class MainListViewModel {
                 }
                 self.hasMore = newCryptos.count == self.perPage
                 if self.hasMore { self.currentPage += 1 }
-                self.applySearch(text: self.searchText)
+                self.applySearchAndSort(text: self.searchText)
             })
             .store(in: &cancellables)
     }

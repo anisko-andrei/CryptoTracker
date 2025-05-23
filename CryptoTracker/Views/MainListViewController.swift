@@ -43,7 +43,7 @@ final class MainListViewController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
-
+    
     @objc private func keyboardWillShow(notification: Notification) {
         guard let userInfo = notification.userInfo,
               let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
@@ -52,12 +52,12 @@ final class MainListViewController: UIViewController {
         tableView.contentInset.bottom = bottomInset
         tableView.verticalScrollIndicatorInsets.bottom = bottomInset
     }
-
+    
     @objc private func keyboardWillHide(notification: Notification) {
         tableView.contentInset.bottom = 0
         tableView.verticalScrollIndicatorInsets.bottom = 0
     }
-
+    
     private func setupUI() {
         view.backgroundColor = .systemBackground
         title = "CryptoTracker"
@@ -67,6 +67,10 @@ final class MainListViewController: UIViewController {
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.searchBar.placeholder = "Search"
         searchController.searchBar.delegate = self
+        
+        // SORT BUTTON
+        let sortButton = UIBarButtonItem(title: "Sort", style: .plain, target: self, action: #selector(showSortMenu))
+        navigationItem.rightBarButtonItem = sortButton
         
         // TableView
         tableView.register(CryptoCell.self, forCellReuseIdentifier: CryptoCell.identifier)
@@ -102,12 +106,47 @@ final class MainListViewController: UIViewController {
         view.bringSubviewToFront(errorLabel)
     }
     
+    @objc private func showSortMenu() {
+        let alert = UIAlertController(title: "Sort by", message: nil, preferredStyle: .actionSheet)
+        let currentSort = viewModel.sortType
+        
+        func addSortAction(type: MainListViewModel.SortType, style: UIAlertAction.Style = .default) {
+            let isSelected = currentSort == type
+            let action = UIAlertAction(
+                title: type.rawValue,
+                style: style,
+                handler: { [weak self] _ in
+                    guard let self else { return }
+                    self.viewModel.sortType = type
+                    self.viewModel.applySearchAndSort(text: self.viewModel.searchText)
+                    self.tableView.reloadData()
+                }
+            )
+            if isSelected {
+                action.setValue(UIImage(systemName: "checkmark"), forKey: "image")
+            }
+            alert.addAction(action)
+        }
+        
+        addSortAction(type: .nameAsc)
+        addSortAction(type: .nameDesc)
+        addSortAction(type: .priceAsc)
+        addSortAction(type: .priceDesc)
+        addSortAction(type: .none, style: .destructive)
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        
+        if let popover = alert.popoverPresentationController {
+            popover.barButtonItem = navigationItem.rightBarButtonItem
+        }
+        present(alert, animated: true)
+    }
+    
     @objc private func handleRefresh() {
         guard viewModel.searchText.isEmpty else {
             refreshControl.endRefreshing()
             return
         }
-        print("Refresh triggered")
         viewModel.fetchCryptos(reset: true)
     }
     
@@ -144,12 +183,11 @@ final class MainListViewController: UIViewController {
             .store(in: &cancellables)
         
         viewModel.$searchText
-               .receive(on: DispatchQueue.main)
-               .sink { [weak self] text in
-                   // Отключаем pull-to-refresh, если поле поиска не пустое
-                   self?.refreshControl.isEnabled = text.isEmpty
-               }
-               .store(in: &cancellables)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] text in
+                self?.refreshControl.isEnabled = text.isEmpty
+            }
+            .store(in: &cancellables)
     }
 }
 
@@ -191,14 +229,14 @@ extension MainListViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         viewModel.searchText = searchText
     }
-
+    
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         let query = searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard !query.isEmpty else { return }
         viewModel.searchRemote(for: query)
         searchBar.resignFirstResponder()
     }
-
+    
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         viewModel.searchText = ""
         viewModel.fetchCryptos(reset: true)
