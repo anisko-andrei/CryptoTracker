@@ -32,6 +32,8 @@ final class MainListViewModel {
     private var allCryptos: [CryptoCurrency] = []
     
     @Published var sortType: SortType = .none
+    @Published var minPrice: Double?
+    @Published var maxPrice: Double?
     
     init(cryptoService: CryptoServiceProtocol) {
         self.cryptoService = cryptoService
@@ -42,22 +44,28 @@ final class MainListViewModel {
         $searchText
             .removeDuplicates()
             .debounce(for: .milliseconds(200), scheduler: DispatchQueue.main)
-            .sink { [weak self] text in
-                self?.applySearchAndSort(text: text)
+            .sink { [weak self] _ in
+                self?.applySearchAndSort()
             }
             .store(in: &cancellables)
     }
     
-    func applySearchAndSort(text: String) {
+    func applySearchAndSort() {
         var filtered: [CryptoCurrency]
-        if text.isEmpty {
+        if searchText.isEmpty {
             filtered = allCryptos
         } else {
-            let lowercased = text.lowercased()
+            let lowercased = searchText.lowercased()
             filtered = allCryptos.filter {
                 $0.name?.lowercased().contains(lowercased) == true ||
                 $0.symbol?.lowercased().contains(lowercased) == true
             }
+        }
+        if let min = minPrice {
+            filtered = filtered.filter { ($0.currentPrice ?? 0) >= min }
+        }
+        if let max = maxPrice {
+            filtered = filtered.filter { ($0.currentPrice ?? 0) <= max }
         }
         cryptos = sort(cryptos: filtered, by: sortType)
     }
@@ -95,7 +103,7 @@ final class MainListViewModel {
                 }
             }, receiveValue: { [weak self] coinsWithPrice in
                 self?.allCryptos = coinsWithPrice
-                self?.applySearchAndSort(text: self?.searchText ?? "")
+                self?.applySearchAndSort()
             })
             .store(in: &cancellables)
     }
@@ -128,7 +136,7 @@ final class MainListViewModel {
                 }
                 self.hasMore = newCryptos.count == self.perPage
                 if self.hasMore { self.currentPage += 1 }
-                self.applySearchAndSort(text: self.searchText)
+                self.applySearchAndSort()
             })
             .store(in: &cancellables)
     }

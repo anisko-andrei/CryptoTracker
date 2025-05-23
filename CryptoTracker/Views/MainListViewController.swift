@@ -68,9 +68,23 @@ final class MainListViewController: UIViewController {
         searchController.searchBar.placeholder = "Search"
         searchController.searchBar.delegate = self
         
-        // SORT BUTTON
-        let sortButton = UIBarButtonItem(title: "Sort", style: .plain, target: self, action: #selector(showSortMenu))
-        navigationItem.rightBarButtonItem = sortButton
+        // SORT BUTTON (иконка)
+        let sortButton = UIBarButtonItem(
+            image: UIImage(systemName: "arrow.up.arrow.down.square"),
+            style: .plain,
+            target: self,
+            action: #selector(showSortMenu)
+        )
+        
+        // FILTER BUTTON (иконка)
+        let filterButton = UIBarButtonItem(
+            image: UIImage(systemName: "slider.horizontal.3"),
+            style: .plain,
+            target: self,
+            action: #selector(showFilterMenu)
+        )
+        
+        navigationItem.rightBarButtonItems = [filterButton, sortButton]
         
         // TableView
         tableView.register(CryptoCell.self, forCellReuseIdentifier: CryptoCell.identifier)
@@ -118,8 +132,7 @@ final class MainListViewController: UIViewController {
                 handler: { [weak self] _ in
                     guard let self else { return }
                     self.viewModel.sortType = type
-                    self.viewModel.applySearchAndSort(text: self.viewModel.searchText)
-                    self.tableView.reloadData()
+                    self.viewModel.applySearchAndSort()
                 }
             )
             if isSelected {
@@ -137,8 +150,40 @@ final class MainListViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
         
         if let popover = alert.popoverPresentationController {
-            popover.barButtonItem = navigationItem.rightBarButtonItem
+            popover.barButtonItem = navigationItem.rightBarButtonItems?.first(where: { $0.action == #selector(showSortMenu) })
         }
+        present(alert, animated: true)
+    }
+    
+    @objc private func showFilterMenu() {
+        let alert = UIAlertController(title: "Filter by Price", message: "Set min and/or max price (USD)", preferredStyle: .alert)
+        alert.addTextField { tf in
+            tf.placeholder = "Min price"
+            tf.keyboardType = .decimalPad
+            if let min = self.viewModel.minPrice { tf.text = "\(min)" }
+        }
+        alert.addTextField { tf in
+            tf.placeholder = "Max price"
+            tf.keyboardType = .decimalPad
+            if let max = self.viewModel.maxPrice { tf.text = "\(max)" }
+        }
+        alert.addAction(UIAlertAction(title: "Apply", style: .default, handler: { [weak self] _ in
+            guard let self else { return }
+            let minText = alert.textFields?[0].text ?? ""
+            let maxText = alert.textFields?[1].text ?? ""
+            let min = Double(minText)
+            let max = Double(maxText)
+            self.viewModel.minPrice = min
+            self.viewModel.maxPrice = max
+            self.viewModel.applySearchAndSort()
+        }))
+        alert.addAction(UIAlertAction(title: "Reset", style: .destructive, handler: { [weak self] _ in
+            guard let self else { return }
+            self.viewModel.minPrice = nil
+            self.viewModel.maxPrice = nil
+            self.viewModel.applySearchAndSort()
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         present(alert, animated: true)
     }
     
@@ -158,7 +203,7 @@ final class MainListViewController: UIViewController {
         viewModel.$cryptos
             .receive(on: DispatchQueue.main)
             .dropFirst()
-            .sink { [weak self] cryptos in
+            .sink { [weak self] _ in
                 self?.activityIndicator.stopAnimating()
                 self?.activityIndicator.isHidden = true
                 self?.refreshControl.endRefreshing()
@@ -228,6 +273,7 @@ extension MainListViewController: UITableViewDataSource, UITableViewDelegate {
 extension MainListViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         viewModel.searchText = searchText
+        viewModel.applySearchAndSort()
     }
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
