@@ -201,15 +201,18 @@ final class MainListViewController: UIViewController {
         errorLabel.isHidden = true
         
         viewModel.$cryptos
+            .dropFirst(2)
             .receive(on: DispatchQueue.main)
-            .dropFirst()
-            .sink { [weak self] _ in
+           
+            .sink { [weak self] c in
+                print(c)
                 self?.activityIndicator.stopAnimating()
                 self?.activityIndicator.isHidden = true
                 self?.refreshControl.endRefreshing()
                 self?.errorLabel.isHidden = true
                 self?.tableView.reloadData()
             }
+        
             .store(in: &cancellables)
         
         viewModel.$error
@@ -242,14 +245,18 @@ extension MainListViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         viewModel.cryptos.count
     }
-    
+
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: CryptoCell.identifier, for: indexPath) as? CryptoCell else {
             return UITableViewCell()
         }
         let crypto = viewModel.cryptos[indexPath.row]
-        cell.configure(with: crypto)
-        
+        cell.configure(with: crypto, isFavorite: FavoritesManager.shared.isFavorite(id: crypto.id ?? ""))
+        cell.onFavoriteTapped = { [weak self] in
+            guard let id = crypto.id else { return }
+            FavoritesManager.shared.toggle(id: id)
+            self?.tableView.reloadRows(at: [indexPath], with: .none)
+        }
         viewModel.loadNextPageIfNeeded(index: indexPath.row)
         return cell
     }
