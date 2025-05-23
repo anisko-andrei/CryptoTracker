@@ -16,6 +16,7 @@ final class MainListViewController: UIViewController {
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
     private let errorLabel = UILabel()
     private let refreshControl = UIRefreshControl()
+    private let searchController = UISearchController(searchResultsController: nil)
     
     init(viewModel: MainListViewModel) {
         self.viewModel = viewModel
@@ -26,16 +27,46 @@ final class MainListViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         bindViewModel()
         viewModel.fetchCryptos()
+        setupKeyboardObservers()
     }
     
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+
+    @objc private func keyboardWillShow(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+        let keyboardHeight = keyboardFrame.height
+        let bottomInset = keyboardHeight - view.safeAreaInsets.bottom
+        tableView.contentInset.bottom = bottomInset
+        tableView.verticalScrollIndicatorInsets.bottom = bottomInset
+    }
+
+    @objc private func keyboardWillHide(notification: Notification) {
+        tableView.contentInset.bottom = 0
+        tableView.verticalScrollIndicatorInsets.bottom = 0
+    }
+
     private func setupUI() {
         view.backgroundColor = .systemBackground
         title = "CryptoTracker"
+        
+        // SEARCH
+        navigationItem.searchController = searchController
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search"
+        searchController.searchBar.delegate = self
         
         // TableView
         tableView.register(CryptoCell.self, forCellReuseIdentifier: CryptoCell.identifier)
@@ -72,6 +103,10 @@ final class MainListViewController: UIViewController {
     }
     
     @objc private func handleRefresh() {
+        guard viewModel.searchText.isEmpty else {
+            refreshControl.endRefreshing()
+            return
+        }
         print("Refresh triggered")
         viewModel.fetchCryptos(reset: true)
     }
@@ -107,6 +142,14 @@ final class MainListViewController: UIViewController {
                 }
             }
             .store(in: &cancellables)
+        
+        viewModel.$searchText
+               .receive(on: DispatchQueue.main)
+               .sink { [weak self] text in
+                   // Отключаем pull-to-refresh, если поле поиска не пустое
+                   self?.refreshControl.isEnabled = text.isEmpty
+               }
+               .store(in: &cancellables)
     }
 }
 
@@ -139,5 +182,25 @@ extension MainListViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         (viewModel.isLoadingPage && viewModel.cryptos.count > 0) ? 44 : 0
+    }
+}
+
+// MARK: - UISearchBarDelegate
+
+extension MainListViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        viewModel.searchText = searchText
+    }
+
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let query = searchBar.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !query.isEmpty else { return }
+        viewModel.searchRemote(for: query)
+        searchBar.resignFirstResponder()
+    }
+
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        viewModel.searchText = ""
+        viewModel.fetchCryptos(reset: true)
     }
 }
