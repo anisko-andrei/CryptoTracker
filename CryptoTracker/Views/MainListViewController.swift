@@ -40,6 +40,7 @@ final class MainListViewController: UIViewController {
         // TableView
         tableView.register(CryptoCell.self, forCellReuseIdentifier: CryptoCell.identifier)
         tableView.dataSource = self
+        tableView.delegate = self
         tableView.refreshControl = refreshControl
         refreshControl.addTarget(self, action: #selector(handleRefresh), for: .valueChanged)
         view.addSubview(tableView)
@@ -72,7 +73,7 @@ final class MainListViewController: UIViewController {
     
     @objc private func handleRefresh() {
         print("Refresh triggered")
-        viewModel.fetchCryptos()
+        viewModel.fetchCryptos(reset: true)
     }
     
     private func bindViewModel() {
@@ -111,7 +112,7 @@ final class MainListViewController: UIViewController {
 
 // MARK: - UITableViewDataSource
 
-extension MainListViewController: UITableViewDataSource {
+extension MainListViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         viewModel.cryptos.count
     }
@@ -122,6 +123,21 @@ extension MainListViewController: UITableViewDataSource {
         }
         let crypto = viewModel.cryptos[indexPath.row]
         cell.configure(with: crypto)
+        
+        viewModel.loadNextPageIfNeeded(index: indexPath.row)
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        if viewModel.isLoadingPage && viewModel.cryptos.count > 0 {
+            let footer = UIActivityIndicatorView(style: .medium)
+            footer.startAnimating()
+            return footer
+        }
+        return nil
+    }
+    
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        (viewModel.isLoadingPage && viewModel.cryptos.count > 0) ? 44 : 0
     }
 }
