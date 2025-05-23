@@ -9,5 +9,6 @@
 import Foundation
 
 final class DependencyContainer {
-    lazy var cryptoService: CryptoServiceProtocol = CryptoService()
+    lazy var networkService: NetworkServiceProtocol = NetworkService()
+    lazy var cryptoService: CryptoServiceProtocol = CryptoService(networkService: networkService)
 }
