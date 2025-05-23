@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		34A8F8482DE07BB400B688D1 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 34A8F8472DE07BB400B688D1 /* SnapKit */; };
+		34A8F84B2DE07E6E00B688D1 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 34A8F84A2DE07E6E00B688D1 /* Kingfisher */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		343582102DE04A2F000B638C /* CryptoTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CryptoTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +41,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				34A8F84B2DE07E6E00B688D1 /* Kingfisher in Frameworks */,
+				34A8F8482DE07BB400B688D1 /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +85,8 @@
 			);
 			name = CryptoTracker;
 			packageProductDependencies = (
+				34A8F8472DE07BB400B688D1 /* SnapKit */,
+				34A8F84A2DE07E6E00B688D1 /* Kingfisher */,
 			);
 			productName = CryptoTracker;
 			productReference = 343582102DE04A2F000B638C /* CryptoTracker.app */;
@@ -107,6 +116,10 @@
 			);
 			mainGroup = 343582072DE04A2E000B638C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				34A8F8462DE07BB400B688D1 /* XCRemoteSwiftPackageReference "SnapKit" */,
+				34A8F8492DE07E6E00B688D1 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 343582112DE04A2F000B638C /* Products */;
 			projectDirPath = "";
@@ -333,6 +346,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		34A8F8462DE07BB400B688D1 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.7.1;
+			};
+		};
+		34A8F8492DE07E6E00B688D1 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.3.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		34A8F8472DE07BB400B688D1 /* SnapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 34A8F8462DE07BB400B688D1 /* XCRemoteSwiftPackageReference "SnapKit" */;
+			productName = SnapKit;
+		};
+		34A8F84A2DE07E6E00B688D1 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 34A8F8492DE07E6E00B688D1 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 343582082DE04A2E000B638C /* Project object */;
 }
