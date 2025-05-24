@@ -18,12 +18,14 @@ final class MainListViewModel {
     }
     
     private let cryptoService: CryptoServiceProtocol
+    private let cacheService: CacheService<CryptoCurrency>
     private var cancellables = Set<AnyCancellable>()
     
     @Published private(set) var cryptos: [CryptoCurrency] = []
     @Published private(set) var error: NetworkError?
     @Published private(set) var isLoadingPage = false
     @Published private(set) var hasMore = true
+    @Published var isOfflineData = false
     
     private var currentPage = 1
     private let perPage = 50
@@ -35,9 +37,11 @@ final class MainListViewModel {
     @Published var minPrice: Double?
     @Published var maxPrice: Double?
     
-    init(cryptoService: CryptoServiceProtocol) {
+    init(cryptoService: CryptoServiceProtocol, cacheService: CacheService<CryptoCurrency>) {
         self.cryptoService = cryptoService
+        self.cacheService = cacheService
         setupSearch()
+        loadCacheIfNeeded()
     }
     
     private func setupSearch() {
@@ -48,6 +52,14 @@ final class MainListViewModel {
                 self?.applySearchAndSort()
             }
             .store(in: &cancellables)
+    }
+    
+    private func loadCacheIfNeeded() {
+        if let cached = cacheService.load() {
+            self.allCryptos = cached
+            self.isOfflineData = true
+            self.applySearchAndSort()
+        }
     }
     
     func applySearchAndSort() {
@@ -103,6 +115,7 @@ final class MainListViewModel {
                 }
             }, receiveValue: { [weak self] coinsWithPrice in
                 self?.allCryptos = coinsWithPrice
+                self?.isOfflineData = false
                 self?.applySearchAndSort()
             })
             .store(in: &cancellables)
@@ -120,9 +133,15 @@ final class MainListViewModel {
         
         cryptoService.fetchCryptocurrencies(page: currentPage, perPage: perPage)
             .sink(receiveCompletion: { [weak self] completion in
-                self?.isLoadingPage = false
+                guard let self = self else { return }
+                self.isLoadingPage = false
                 if case let .failure(err) = completion {
-                    self?.error = err
+                    self.error = err
+                    if let cached = self.cacheService.load(), self.currentPage == 1 {
+                        self.allCryptos = cached
+                        self.isOfflineData = true
+                        self.applySearchAndSort()
+                    }
                 }
             }, receiveValue: { [weak self] newCryptos in
                 guard let self = self else { return }
@@ -136,7 +155,11 @@ final class MainListViewModel {
                 }
                 self.hasMore = newCryptos.count == self.perPage
                 if self.hasMore { self.currentPage += 1 }
+                self.isOfflineData = false
                 self.applySearchAndSort()
+                if self.currentPage == 2 {
+                    self.cacheService.save(self.allCryptos)
+                }
             })
             .store(in: &cancellables)
     }

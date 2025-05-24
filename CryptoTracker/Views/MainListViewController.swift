@@ -17,6 +17,8 @@ final class MainListViewController: UIViewController {
     private let errorLabel = UILabel()
     private let refreshControl = UIRefreshControl()
     private let searchController = UISearchController(searchResultsController: nil)
+    private let offlineIconView = UIImageView(image: UIImage(systemName: "wifi.slash"))
+    private var offlineBarButtonItem: UIBarButtonItem?
     
     init(viewModel: MainListViewModel) {
         self.viewModel = viewModel
@@ -68,7 +70,7 @@ final class MainListViewController: UIViewController {
         searchController.searchBar.placeholder = "Search"
         searchController.searchBar.delegate = self
         
-        // SORT BUTTON (иконка)
+        // SORT BUTTON
         let sortButton = UIBarButtonItem(
             image: UIImage(systemName: "arrow.up.arrow.down.square"),
             style: .plain,
@@ -76,7 +78,7 @@ final class MainListViewController: UIViewController {
             action: #selector(showSortMenu)
         )
         
-        // FILTER BUTTON (иконка)
+        // FILTER BUTTON
         let filterButton = UIBarButtonItem(
             image: UIImage(systemName: "slider.horizontal.3"),
             style: .plain,
@@ -84,6 +86,17 @@ final class MainListViewController: UIViewController {
             action: #selector(showFilterMenu)
         )
         
+        //OFFLINE ICON
+        offlineIconView.tintColor = .systemRed
+        offlineIconView.contentMode = .scaleAspectFit
+        offlineIconView.snp.makeConstraints { make in
+            make.width.height.equalTo(22)
+        }
+        offlineBarButtonItem = UIBarButtonItem(customView: offlineIconView)
+        offlineBarButtonItem?.isEnabled = false
+        offlineBarButtonItem?.customView?.isHidden = true
+        
+        navigationItem.leftBarButtonItem = offlineBarButtonItem
         navigationItem.rightBarButtonItems = [filterButton, sortButton]
         
         // TableView
@@ -203,16 +216,20 @@ final class MainListViewController: UIViewController {
         viewModel.$cryptos
             .dropFirst(2)
             .receive(on: DispatchQueue.main)
-           
-            .sink { [weak self] c in
-                print(c)
+            .sink { [weak self] _ in
                 self?.activityIndicator.stopAnimating()
                 self?.activityIndicator.isHidden = true
                 self?.refreshControl.endRefreshing()
                 self?.errorLabel.isHidden = true
                 self?.tableView.reloadData()
             }
+            .store(in: &cancellables)
         
+        viewModel.$isOfflineData
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isOffline in
+                self?.offlineBarButtonItem?.customView?.isHidden = !isOffline
+            }
             .store(in: &cancellables)
         
         viewModel.$error
@@ -245,7 +262,7 @@ extension MainListViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         viewModel.cryptos.count
     }
-
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: CryptoCell.identifier, for: indexPath) as? CryptoCell else {
             return UITableViewCell()

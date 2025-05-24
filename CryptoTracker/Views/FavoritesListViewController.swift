@@ -16,6 +16,8 @@ final class FavoritesListViewController: UIViewController {
     private let tableView = UITableView()
     private let emptyLabel = UILabel()
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
+    private let offlineIconView = UIImageView(image: UIImage(systemName: "wifi.slash"))
+    private var offlineBarButtonItem: UIBarButtonItem?
     
     init(viewModel: FavoritesListViewModel) {
         self.viewModel = viewModel
@@ -42,6 +44,17 @@ final class FavoritesListViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
         title = "Favorites"
+        
+        //OFFLINE ICON
+        offlineIconView.tintColor = .systemRed
+        offlineIconView.contentMode = .scaleAspectFit
+        offlineIconView.snp.makeConstraints { make in
+            make.width.height.equalTo(22)
+        }
+        offlineBarButtonItem = UIBarButtonItem(customView: offlineIconView)
+        offlineBarButtonItem?.isEnabled = false
+        offlineBarButtonItem?.customView?.isHidden = true
+        navigationItem.leftBarButtonItem = offlineBarButtonItem
         
         // TableView
         tableView.register(CryptoCell.self, forCellReuseIdentifier: CryptoCell.identifier)
@@ -77,6 +90,13 @@ final class FavoritesListViewController: UIViewController {
                 self?.activityIndicator.stopAnimating()
                 self?.emptyLabel.isHidden = !cryptos.isEmpty
                 self?.tableView.reloadData()
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$isOfflineData
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isOffline in
+                self?.offlineBarButtonItem?.customView?.isHidden = !isOffline
             }
             .store(in: &cancellables)
         

@@ -18,25 +18,7 @@ final class AppCoordinator: Coordinator {
     }
     
     func start() {
-        // Main tab
-        let mainListViewModel = MainListViewModel(
-            cryptoService: dependencyContainer.cryptoService
-        )
-        let mainListVC = MainListViewController(viewModel: mainListViewModel)
-        mainListVC.tabBarItem = UITabBarItem(title: "All", image: UIImage(systemName: "list.bullet"), tag: 0)
-        
-        // Favorites tab
-        let favoritesListViewModel = FavoritesListViewModel(cryptoService: dependencyContainer.cryptoService)
-        let favoritesListVC = FavoritesListViewController(viewModel: favoritesListViewModel)
-        favoritesListVC.tabBarItem = UITabBarItem(title: "Favorites", image: UIImage(systemName: "star.fill"), tag: 1)
-        
-        // Tab Bar Controller
-        let tabBarController = UITabBarController()
-        tabBarController.viewControllers = [
-            UINavigationController(rootViewController: mainListVC),
-            UINavigationController(rootViewController: favoritesListVC)
-        ]
-        
+        let tabBarController = RootTabBarController(dependencyContainer: dependencyContainer)
         window.rootViewController = tabBarController
         window.makeKeyAndVisible()
     }
