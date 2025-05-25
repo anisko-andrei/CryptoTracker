@@ -13,6 +13,8 @@ protocol CryptoServiceProtocol {
     func fetchCryptocurrencies(page: Int, perPage: Int) -> AnyPublisher<[CryptoCurrency], NetworkError>
     func searchCryptocurrencies(query: String) -> AnyPublisher<[CryptoCurrency], NetworkError>
     func fetchCryptosByIds(ids: [String], vsCurrency: String) -> AnyPublisher<[CryptoCurrency], NetworkError>
+    func fetchChartData(cryptoId: String, days: String) -> AnyPublisher<ChartDataResponse, NetworkError>
+       func fetchCryptoDetails(cryptoId: String) -> AnyPublisher<CryptoCurrency, NetworkError>
 }
 
 final class CryptoService: CryptoServiceProtocol {
@@ -50,4 +52,21 @@ final class CryptoService: CryptoServiceProtocol {
         }
         return networkService.fetch(url: url)
     }
+    
+      func fetchChartData(cryptoId: String, days: String) -> AnyPublisher<ChartDataResponse, NetworkError> {
+          // days: "1" / "7" / "30"
+          let urlString = "https://api.coingecko.com/api/v3/coins/\(cryptoId)/market_chart?vs_currency=usd&days=\(days)"
+          guard let url = URL(string: urlString) else {
+              return Fail(error: NetworkError.invalidURL).eraseToAnyPublisher()
+          }
+          return networkService.fetch(url: url)
+      }
+
+      func fetchCryptoDetails(cryptoId: String) -> AnyPublisher<CryptoCurrency, NetworkError> {
+          let urlString = "https://api.coingecko.com/api/v3/coins/\(cryptoId)?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false"
+          guard let url = URL(string: urlString) else {
+              return Fail(error: NetworkError.invalidURL).eraseToAnyPublisher()
+          }
+          return networkService.fetch(url: url)
+      }
 }

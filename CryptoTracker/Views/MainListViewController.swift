@@ -39,11 +39,16 @@ final class MainListViewController: UIViewController {
         bindViewModel()
         viewModel.fetchCryptos()
         setupKeyboardObservers()
+        NotificationCenter.default.addObserver(self, selector: #selector(favoritesChanged), name: FavoritesManager.favoritesChangedNotification, object: nil)
     }
     
     private func setupKeyboardObservers() {
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+    
+    @objc private func favoritesChanged() {
+        tableView.reloadData()
     }
     
     @objc private func keyboardWillShow(notification: Notification) {
@@ -289,6 +294,13 @@ extension MainListViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         (viewModel.isLoadingPage && viewModel.cryptos.count > 0) ? 44 : 0
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let crypto = viewModel.cryptos[indexPath.row]
+        let detailVM = CryptoDetailViewModel(crypto: crypto, cryptoService: viewModel.cryptoService)
+        let detailVC = CryptoDetailViewController(viewModel: detailVM)
+        navigationController?.pushViewController(detailVC, animated: true)
     }
 }
 

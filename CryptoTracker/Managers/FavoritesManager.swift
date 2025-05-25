@@ -10,6 +10,8 @@ import Foundation
 
 final class FavoritesManager {
     static let shared = FavoritesManager()
+    static let favoritesChangedNotification = Notification.Name("FavoritesChangedNotification")
+
     private let key = "favorite_crypto_ids"
     
     private init() {}
@@ -40,5 +42,6 @@ final class FavoritesManager {
     
     func toggle(id: String) {
         isFavorite(id: id) ? remove(id: id) : add(id: id)
+        NotificationCenter.default.post(name: FavoritesManager.favoritesChangedNotification, object: nil)
     }
 }

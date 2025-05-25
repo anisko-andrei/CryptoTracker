@@ -17,7 +17,7 @@ final class MainListViewModel {
         case priceDesc = "Price ↓"
     }
     
-    private let cryptoService: CryptoServiceProtocol
+    let cryptoService: CryptoServiceProtocol
     private let cacheService: CacheService<CryptoCurrency>
     private var cancellables = Set<AnyCancellable>()
     

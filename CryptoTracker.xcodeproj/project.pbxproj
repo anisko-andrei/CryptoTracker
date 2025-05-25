@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		34356B752DE4565600371991 /* DGCharts in Frameworks */ = {isa = PBXBuildFile; productRef = 34356B742DE4565600371991 /* DGCharts */; };
 		34A8F8482DE07BB400B688D1 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 34A8F8472DE07BB400B688D1 /* SnapKit */; };
 		34A8F84B2DE07E6E00B688D1 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 34A8F84A2DE07E6E00B688D1 /* Kingfisher */; };
 /* End PBXBuildFile section */
@@ -42,6 +43,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				34A8F84B2DE07E6E00B688D1 /* Kingfisher in Frameworks */,
+				34356B752DE4565600371991 /* DGCharts in Frameworks */,
 				34A8F8482DE07BB400B688D1 /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -87,6 +89,7 @@
 			packageProductDependencies = (
 				34A8F8472DE07BB400B688D1 /* SnapKit */,
 				34A8F84A2DE07E6E00B688D1 /* Kingfisher */,
+				34356B742DE4565600371991 /* DGCharts */,
 			);
 			productName = CryptoTracker;
 			productReference = 343582102DE04A2F000B638C /* CryptoTracker.app */;
@@ -119,6 +122,7 @@
 			packageReferences = (
 				34A8F8462DE07BB400B688D1 /* XCRemoteSwiftPackageReference "SnapKit" */,
 				34A8F8492DE07E6E00B688D1 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				34356B732DE4565600371991 /* XCRemoteSwiftPackageReference "Charts" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 343582112DE04A2F000B638C /* Products */;
@@ -348,6 +352,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		34356B732DE4565600371991 /* XCRemoteSwiftPackageReference "Charts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/danielgindi/Charts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.1.0;
+			};
+		};
 		34A8F8462DE07BB400B688D1 /* XCRemoteSwiftPackageReference "SnapKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SnapKit/SnapKit.git";
@@ -367,6 +379,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		34356B742DE4565600371991 /* DGCharts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 34356B732DE4565600371991 /* XCRemoteSwiftPackageReference "Charts" */;
+			productName = DGCharts;
+		};
 		34A8F8472DE07BB400B688D1 /* SnapKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 34A8F8462DE07BB400B688D1 /* XCRemoteSwiftPackageReference "SnapKit" */;

@@ -130,4 +130,11 @@ extension FavoritesListViewController: UITableViewDataSource, UITableViewDelegat
         }
         return cell
     }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let crypto = viewModel.cryptos[indexPath.row]
+        let detailVM = CryptoDetailViewModel(crypto: crypto, cryptoService: viewModel.cryptoService)
+        let detailVC = CryptoDetailViewController(viewModel: detailVM)
+        navigationController?.pushViewController(detailVC, animated: true)
+    }
 }

@@ -10,7 +10,7 @@ import Foundation
 import Combine
 
 final class FavoritesListViewModel {
-    private let cryptoService: CryptoServiceProtocol
+    let cryptoService: CryptoServiceProtocol
     private let cacheService: CacheService<CryptoCurrency>
     private var cancellables = Set<AnyCancellable>()
 
