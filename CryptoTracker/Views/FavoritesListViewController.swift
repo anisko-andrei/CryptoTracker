@@ -34,6 +34,7 @@ final class FavoritesListViewController: UIViewController {
         setupUI()
         bindViewModel()
         viewModel.fetchFavorites()
+        navigationController?.delegate = self
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -136,5 +137,15 @@ extension FavoritesListViewController: UITableViewDataSource, UITableViewDelegat
         let detailVM = CryptoDetailViewModel(crypto: crypto, cryptoService: viewModel.cryptoService)
         let detailVC = CryptoDetailViewController(viewModel: detailVM)
         navigationController?.pushViewController(detailVC, animated: true)
+    }
+}
+
+extension FavoritesListViewController: UINavigationControllerDelegate {
+    func navigationController(_ navigationController: UINavigationController,
+                             animationControllerFor operation: UINavigationController.Operation,
+                             from fromVC: UIViewController,
+                             to toVC: UIViewController
+    ) -> UIViewControllerAnimatedTransitioning? {
+        return FadePushAnimator()
     }
 }

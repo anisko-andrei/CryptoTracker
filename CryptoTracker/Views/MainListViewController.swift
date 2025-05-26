@@ -40,6 +40,7 @@ final class MainListViewController: UIViewController {
         viewModel.fetchCryptos()
         setupKeyboardObservers()
         NotificationCenter.default.addObserver(self, selector: #selector(favoritesChanged), name: FavoritesManager.favoritesChangedNotification, object: nil)
+        navigationController?.delegate = self
     }
     
     private func setupKeyboardObservers() {
@@ -322,5 +323,15 @@ extension MainListViewController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         viewModel.searchText = ""
         viewModel.fetchCryptos(reset: true)
+    }
+}
+
+extension MainListViewController: UINavigationControllerDelegate {
+    func navigationController(_ navigationController: UINavigationController,
+                             animationControllerFor operation: UINavigationController.Operation,
+                             from fromVC: UIViewController,
+                             to toVC: UIViewController
+    ) -> UIViewControllerAnimatedTransitioning? {
+        return FadePushAnimator()
     }
 }
